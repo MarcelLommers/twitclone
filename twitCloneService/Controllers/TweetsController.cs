@@ -30,6 +30,12 @@ namespace twitCloneService.Controllers
             // Order by upload date, starting at the most recent.
             result = result.OrderByDescending(t => t.PostDate);
 
+            // embedVideo
+            foreach (var tweetData in result)
+            {
+                CheckForVideo(tweetData);
+            }
+
             return result.ToList();
         }
 
@@ -63,6 +69,12 @@ namespace twitCloneService.Controllers
 
             // Order by upload date, starting at the most recent.
             result = result.OrderByDescending(t => t.PostDate);
+
+            // embedVideo
+            foreach(var tweetData in result)
+            {
+                CheckForVideo(tweetData);
+            }
 
             return result.ToList();
         }
@@ -130,6 +142,33 @@ namespace twitCloneService.Controllers
         private bool TweetExists(Guid id)
         {
             return _context.Tweets.Any(e => e.Id == id);
+        }
+
+        private void CheckForVideo (Tweet tweet)
+        {
+            string TweetMessage = tweet.Message;
+            string[] messageWords = TweetMessage.Split(
+                new[] { " ", "\r\n", "\r", "\n" },
+                StringSplitOptions.None
+            );
+
+            foreach (var word in messageWords)
+            {
+                if (word.Contains("https://www.youtube.com"))
+                {
+                    // replace watch param with embed link
+                    string targetVideo = word.Replace("com/watch?v=", "com/embed/");
+
+                    tweet.Message += string.Format(@"
+                        <iframe
+                            class=""video""
+                            src=""{0}""
+                            frameborder=""0""
+                            allowfullscreen>
+                        </iframe>",
+                    targetVideo);
+                }
+            }
         }
     }
 }
